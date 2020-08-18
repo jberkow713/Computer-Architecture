@@ -13,16 +13,32 @@ class CPU:
         self.pc = 0
         #256 bits memory in binary
         self.ram = [0b0] * 256
-       
+        #set to 0xF4 when reset
         self.reg[7] = 0xF4
 
-    def load(self):
+    def load(self, file=None):
         """Load a program into memory."""
 
         address = 0
-        registers = [0] * 8
 
-        # For now, we've just hardcoded a program:
+        #open the examples folder + filename 
+        if file:
+            with open('./examples/' + file) as f:
+                address = 0
+                #split the lines and take the integer before the #
+                # plug that value into the program as the command, perform the command
+
+                for line in f:
+                    line = line.split("#")[0].strip()
+                    if line == '':
+                        continue
+                    else:
+                        #interprets command into binary, hence the 2
+                        command = int(line, 2)  
+                        self.ram[address] = command
+                        address += 1     
+
+        
 
         program = [
             # From print8.ls8
@@ -65,6 +81,9 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+        #multiplies a *b and returns it in a's value
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]        
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -96,10 +115,9 @@ class CPU:
         while running:
                         
             HLT = 0b00000001
-
             LDI = 0b10000010
-
             PRN = 0b01000111
+            MUL = 0b10100010
             
             
             #setting variables for register 1 and 2
@@ -119,7 +137,8 @@ class CPU:
 
             # LDI, or Load Immediate; set specified register to specific value by setting the 
             # current register's value to the next one in the PC, and then jump over both of 
-            # these operations by incrementing by 3
+            # these operations by incrementing by 3, you're actually setting the index at operation
+            # a in the register's value to equal operation b's register number
 
             elif ir == LDI:
 
@@ -134,4 +153,14 @@ class CPU:
 
             elif ir == PRN:
                 print(self.reg[operation_a])
-                self.pc += 2    
+                self.pc += 2   
+
+            #if the command is MUL, take operation A's value, multiply it by operation B's value, 
+            # store it as operation A's value
+            elif ir == MUL:
+                self.reg[operation_a] *= self.reg[operation_b]
+
+                self.pc += 3    
+
+
+             
