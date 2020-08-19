@@ -118,6 +118,9 @@ class CPU:
             LDI = 0b10000010
             PRN = 0b01000111
             MUL = 0b10100010
+            PUSH = 0b01000101
+            POP = 0b01000110
+            
             
             
             #setting variables for register 1 and 2
@@ -161,6 +164,37 @@ class CPU:
                 self.reg[operation_a] *= self.reg[operation_b]
 
                 self.pc += 3    
+
+            elif ir == PUSH:
+                #decrement Stack
+                self.reg[7] -= 1
+
+                # Get value from register
+                reg_num = self.ram[self.pc + 1]
+                value = self.reg[reg_num]
+
+                # Store it on the stack
+                top_of_stack_addr = self.reg[7]
+                self.ram[top_of_stack_addr] = value
+
+                self.pc += 2
+
+            elif ir == POP:
+                #increment stack
+                value = self.ram_read(self.reg[7])
+                self.reg[operation_a] = value
+                
+                self.reg[7] +=1
+                self.pc +=2
+
+
+
+
+
+
+
+
+
 
 
              
