@@ -15,6 +15,7 @@ class CPU:
         self.ram = [0b0] * 256
         #set to 0xF4 when reset
         self.reg[7] = 0xF4
+        self.fl = None 
 
     def load(self, file=None):
         """Load a program into memory."""
@@ -82,11 +83,29 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #multiplies a *b and returns it in a's value
+        elif op == "AND":
+            self.reg[reg_a] = self.reg[reg_a] & self.reg[reg_b]
+
+        elif op == "OR":
+            self.reg[reg_a] = self.reg[reg_a] | self.reg[reg_b]
+        elif op == "XOR":
+            self.reg[reg_a] = self.reg[reg_a] ^ self.reg[reg_b]    
+        
+
+
+
         elif op == "MUL":
-            self.reg[reg_a] *= self.reg[reg_b]        
+            self.reg[reg_a] *= self.reg[reg_b]   
+        elif op == "SUB": 
+            if self.reg[reg_a] >= self.reg[reg_b]:
+                self.reg[reg_a] -= self.reg[reg_b]  
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.reg[reg_a] = (self.reg[reg_b] - self.reg[reg_a]) * -1
+
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
+
 
     def trace(self):
         """
@@ -120,13 +139,16 @@ class CPU:
             MUL = 0b10100010
             PUSH = 0b01000101
             POP = 0b01000110
-            
-            
-            
-            #setting variables for register 1 and 2
+            JMP = 0b01010100
+            CMP = 0b10100111
+            JNE = 0b01010110
+            JEQ = 0b01010101
+            MOD = 0b10100100
+
+            #setting variables for incrementing commands
             ir = self.ram[self.pc]
-            operation_a = self.ram[self.pc + 1] # register 1
-            operation_b = self.ram[self.pc + 2] # register 2
+            operation_a = self.ram[self.pc + 1] #next command
+            operation_b = self.ram[self.pc + 2] #command after next command
 
 
 
@@ -186,6 +208,53 @@ class CPU:
                 
                 self.reg[7] +=1
                 self.pc +=2
+            #compare values in subsequent registers
+            elif ir == CMP:
+                #if even    
+                if self.reg[operation_a] == self.reg[operation_b]:
+                    self.fl = "E"
+                    self.pc += 3    
+                #if a < b set to less than
+                elif self.reg[operation_a] < self.reg[operation_b]:
+                    self.fl = "LT"
+                    self.pc += 3
+                #if a >b, set to greater than
+                elif self.reg[operation_a] > self.reg[operation_b]:
+                    self.fl = "GT"
+                    self.pc += 3
+                
+                else:
+                    self.fl = 0
+                    self.pc += 3    
+            #set pc command to value in next register
+            elif ir == JMP:
+
+                self.pc = self.reg[operation_a]
+            #if fl is not E, set pc to value in next register
+            elif ir == JNE:
+                
+                if self.fl != "E":
+                    self.pc = self.reg[operation_a]
+                #otherwise increment by 2, go to next command
+                else:
+                    self.pc += 2  
+            # if flag = E, set pc address to value in next register 
+            elif ir == JEQ:
+
+                if self.fl == "E":
+                    self.pc = self.reg[operation_a]
+
+                else:
+                    self.pc += 2      
+
+            elif ir == "MOD":
+                self.reg[operation_a] = self.reg[operation_a] % self.reg[operation_b]
+
+                if self.reg[operation_b] == 0:
+                    print("ERROR")
+                    running = False               
+
+
 
 
 
